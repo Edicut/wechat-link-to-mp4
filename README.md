@@ -77,6 +77,22 @@ The transcript comes from the audio, so expect some homophone errors in Chinese.
 - **Templates don't match** (WeChat update, dark theme, different display scaling): take a screenshot and re-crop the two images in `scripts/templates/`.
 - **Nothing captured**: make sure the video page actually opened and started playing in WeChat; use `--upstream` if your proxy runs on another port.
 
+## Account risk
+
+There is **no guarantee** WeChat won't flag your account. From WeChat's side, this tool:
+
+- sends a link to **your own** File Transfer chat and opens it, the same as doing it by hand;
+- downloads the same video file the player loads anyway;
+- **modifies the Channels page JS locally** (through the proxy) to read the decryption key. This is the one thing a normal user doesn't do, and WeChat could in theory detect it. Tools like res-downloader work the same way and are widely used.
+
+To keep the risk low:
+
+- **Don't grab in bulk** (dozens or hundreds in a short time). Bot-like frequency is the most likely thing to get noticed.
+- Occasionally grabbing a video you want to watch is close to normal use.
+- If you're worried, log in with a **secondary account** on the PC you use for this.
+
+Use at your own risk.
+
 ## Credits
 
 The capture and decryption approach follows [putyy/res-downloader](https://github.com/putyy/res-downloader) (Apache-2.0). Decrypted output was verified byte-for-byte against it.
