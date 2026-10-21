@@ -1,0 +1,8 @@
+mitmproxy
+requests
+opencv-python
+numpy
+pillow
+faster-whisper
+av<16
+opencc-python-reimplemented
