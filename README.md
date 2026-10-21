@@ -69,7 +69,7 @@ The transcript comes from the audio, so expect some homophone errors in Chinese.
 | `scripts/wechat_open.py` | Drives the WeChat window (standalone: `shot <png>`, `click X Y`) |
 | `scripts/isaac64.py` | Channels decryption |
 | `scripts/media.py` | Frame grabbing, contact sheets, transcription |
-| `scripts/templates/` | Image templates for finding File Transfer (captured at 100% scaling, light theme) |
+| `scripts/templates/` | Image templates for finding File Transfer (captured at 150% display scaling in light theme; auto-scaled to your DPI) |
 
 ## Troubleshooting
 

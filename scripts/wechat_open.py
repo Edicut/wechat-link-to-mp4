@@ -8,6 +8,8 @@ from ctypes import wintypes
 import numpy as np
 from PIL import Image, ImageGrab
 
+BASE_DPI = 144   # 坐标和模板都是在 150% 缩放（144 DPI）下量的，其他缩放按比例换算
+_scale = 1.0
 TEMPLATES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 
 ctypes.windll.shcore.SetProcessDpiAwareness(2)
@@ -55,7 +57,14 @@ def find_wechat():
     return max(found)[1]   # 还有个小的 Weixin 弹窗，取最大的那个
 
 
+def S(v):
+    """把 150% 缩放下量的像素换算成当前缩放"""
+    return int(round(v * _scale))
+
+
 def focus(h):
+    global _scale
+    _scale = (u.GetDpiForWindow(h) or BASE_DPI) / BASE_DPI
     u.ShowWindow(h, 9)
     u.keybd_event(0x12, 0, 0, 0); u.keybd_event(0x12, 0, 2, 0)   # 按一下 Alt，SetForegroundWindow 才生效
     u.SetForegroundWindow(h)
@@ -109,23 +118,23 @@ def find_last_link(rect):
     h, w, _ = img.shape
     r, g, b = img[..., 0], img[..., 1], img[..., 2]
     green = (g > 210) & (g - r > 45) & (g - b > 50)   # 气泡底色约 (169,234,160)
-    green[:120] = False                               # 标题栏
-    green[h - 240:] = False                           # 输入框
-    green[:, :345] = False                            # 左边导航和会话列表
-    green[:, w - 100:] = False                        # 右边头像
-    rows = np.where(green.sum(axis=1) >= 40)[0]
+    green[:S(120)] = False                               # 标题栏
+    green[h - S(240):] = False                           # 输入框
+    green[:, :S(345)] = False                            # 左边导航和会话列表
+    green[:, w - S(100):] = False                        # 右边头像
+    rows = np.where(green.sum(axis=1) >= S(40))[0]
     if len(rows) == 0:
         return None
     y1 = rows.max()
     y0 = y1
-    while y0 - 1 in set(rows[rows >= y1 - 300]):      # 往上找到同一个气泡的顶
+    while y0 - 1 in set(rows[rows >= y1 - S(300)]):      # 往上找到同一个气泡的顶
         y0 -= 1
     cols = np.where(green[y0:y1 + 1].any(axis=0))[0]
     x0, x1 = cols.min(), cols.max()
     box = img[y0:y1 + 1, x0:x1 + 1]
     text = (box[..., 2] - box[..., 0] > 40) & (box[..., 1] < 200)   # 气泡里的蓝色链接字
     ys, xs = np.where(text)
-    if len(ys) < 20:
+    if len(ys) < S(20):
         return None
     return int(x0 + np.median(xs)), int(y0 + np.median(ys))
 
@@ -139,6 +148,8 @@ def find_template(rect, name, thr=0.85, region=None):
         x0, y0, x1, y1 = region
         img = img[y0:y1, x0:x1]
     t = cv2.cvtColor(np.asarray(Image.open(os.path.join(TEMPLATES, name)).convert("RGB")), cv2.COLOR_RGB2GRAY)
+    if _scale != 1.0:
+        t = cv2.resize(t, None, fx=_scale, fy=_scale, interpolation=cv2.INTER_AREA if _scale < 1 else cv2.INTER_CUBIC)
     res = cv2.matchTemplate(img, t, cv2.TM_CCOEFF_NORMED)
     _, best, _, (x, y) = cv2.minMaxLoc(res)
     return (x0 + x + t.shape[1] // 2, y0 + y + t.shape[0] // 2) if best >= thr else None
@@ -147,17 +158,17 @@ def find_template(rect, name, thr=0.85, region=None):
 def open_filehelper(h):
     """搜索并打开「文件传输助手」；确认聊天标题是它才返回 True，否则什么都不发"""
     rect = focus(h)
-    click(rect, 248, 83)                      # 左上角放大镜（Ctrl+F 在新版微信里不管用）
+    click(rect, S(248), S(83))                     # 左上角放大镜（Ctrl+F 在新版微信里不管用）
     time.sleep(0.8)
     paste("文件传输助手")
     time.sleep(1.5)
-    p = find_template(rect, "filehelper_icon.png", region=(200, 100, rect[2] - rect[0], rect[3] - rect[1]))
+    p = find_template(rect, "filehelper_icon.png", region=(S(200), S(100), rect[2] - rect[0], rect[3] - rect[1]))
     if not p:                                 # 回车会变成「搜索网络结果」，所以必须点「功能」里那一项
         key(ESC)
         return False
     click(rect, *p)
     time.sleep(1.5)
-    return find_template(rect, "filehelper_title.png", region=(340, 50, rect[2] - rect[0], 120)) is not None
+    return find_template(rect, "filehelper_title.png", region=(S(340), S(50), rect[2] - rect[0], S(120))) is not None
 
 
 def send_and_open(link):
@@ -167,7 +178,7 @@ def send_and_open(link):
         return "no-chat"
     rect = focus(h)
     w, hh = rect[2] - rect[0], rect[3] - rect[1]
-    click(rect, (340 + w) // 2, hh - 160)    # 输入框
+    click(rect, (S(340) + w) // 2, hh - S(160))    # 输入框
     paste(link)
     key(ENTER)
     time.sleep(2.5)

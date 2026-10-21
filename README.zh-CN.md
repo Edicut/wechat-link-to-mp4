@@ -46,7 +46,7 @@ python scripts/wechat_link_to_mp4.py "https://weixin.qq.com/sph/xxxxxxxx"
 | `scripts/wechat_open.py` | 驱动微信窗口（也可单独用：`shot` 截图、`click X Y` 点击） |
 | `scripts/isaac64.py` | 视频号解密 |
 | `scripts/media.py` | 截图拼总览图、语音转文字 |
-| `scripts/templates/` | 识别「文件传输助手」的图片模板（100% 缩放、浅色主题下截取） |
+| `scripts/templates/` | 识别「文件传输助手」的图片模板（在 150% 缩放、浅色主题下截取，会按你的缩放自动换算） |
 
 ## 致谢
 
